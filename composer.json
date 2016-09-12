@@ -11,11 +11,11 @@
     ],
     "autoload": {
         "psr-4": {
-            "SilverStripe\\RecipeInstaller\\": "src/"
+            "SilverStripe\\RecipePlugin\\": "src/"
         }
     },
     "extra": {
-        "class": "SilverStripe\\RecipeInstaller\\RecipeInstallerPlugin"
+        "class": "SilverStripe\\RecipePlugin\\RecipePlugin"
     },
     "require": {
         "composer-plugin-api": "^1.1"

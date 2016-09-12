@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\RecipeInstaller;
+namespace SilverStripe\RecipePlugin;
 
 use Composer\Installer\BinaryInstaller;
 use Composer\Installer\LibraryInstaller;

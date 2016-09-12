@@ -1,7 +1,7 @@
 <?php
 
 
-namespace SilverStripe\RecipeInstaller;
+namespace SilverStripe\RecipePlugin;
 
 use Composer\Composer;
 use Composer\IO\IOInterface;
@@ -10,7 +10,7 @@ use Composer\Plugin\PluginInterface;
 /**
  * Register the RecipeInstaller
  */
-class RecipeInstallerPlugin implements PluginInterface
+class RecipePlugin implements PluginInterface
 {
 
     /**
