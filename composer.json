@@ -1,0 +1,27 @@
+{
+    "name": "tractorcow/recipe-installer",
+    "description": "Helper plugin to install SilverStripe recipes",
+    "type": "composer-plugin",
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Damian Mooyman",
+            "email": "damian@silverstripe.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SilverStripe\\RecipeInstaller\\": "src/"
+        }
+    },
+    "extra": {
+        "class": "SilverStripe\\RecipeInstaller\\RecipeInstallerPlugin"
+    },
+    "require": {
+        "composer-plugin-api": "^1.1"
+    },
+    "require-dev": {
+        "composer/composer": "^1.2"
+    },
+    "minimum-stability": "dev"
+}
