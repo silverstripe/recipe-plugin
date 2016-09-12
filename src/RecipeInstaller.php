@@ -77,7 +77,7 @@ class RecipeInstaller extends LibraryInstaller {
         foreach($patterns as $pattern) {
             $expressions[] = $this->globToRegexp($pattern);
         }
-        $regExp = '#' . $this->globToRegexp($sourceRoot . '/').'(('.implode(')|(', $expressions).'))#';
+        $regExp = '#^' . $this->globToRegexp($sourceRoot . '/').'(('.implode(')|(', $expressions).'))$#';
 
         // Build directory iterator
         $directoryIterator = new RecursiveDirectoryIterator(
