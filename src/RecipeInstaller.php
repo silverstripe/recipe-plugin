@@ -26,9 +26,18 @@ class RecipeInstaller extends LibraryInstaller {
         parent::install($repo, $package);
 
         // Install recipe skeleton
+        var_dump("Package info:\n");
         var_dump($package);
         var_dump($this->getInstallPath($package));
         var_dump($package->getExtra());
+
+        var_dump("Repo info:\n");
         var_dump($repo);
+        if(file_exists('composer.json')) {
+            var_dump(file_get_contents('composer.json'));
+        }
+
+        var_dump("Installer info:\n");
+        var_dump($this);
     }
 }
