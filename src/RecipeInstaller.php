@@ -59,7 +59,7 @@ class RecipeInstaller extends LibraryInstaller {
             }
             $this->io->write("Installing recipe <info>$recipe</info> file <info>$relativePath</info>");
             $this->filesystem->ensureDirectoryExists(dirname($destination));
-            file_put_contents($destination, file_get_contents($path));
+            copy($path, $destination);
         }
     }
 
