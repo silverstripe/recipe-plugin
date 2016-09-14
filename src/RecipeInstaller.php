@@ -19,10 +19,11 @@ class RecipeInstaller extends LibraryInstaller {
     public function __construct(
         IOInterface $io,
         Composer $composer,
+        $type = 'silverstripe-recipe',
         Filesystem $filesystem = null,
         BinaryInstaller $binaryInstaller = null
     ) {
-        parent::__construct($io, $composer, null, $filesystem, $binaryInstaller);
+        parent::__construct($io, $composer, $type, $filesystem, $binaryInstaller);
     }
 
     public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
