@@ -2,13 +2,10 @@
 
 namespace SilverStripe\RecipePlugin;
 
-use Composer\Installer\BinaryInstaller;
 use Composer\Installer\LibraryInstaller;
 use Composer\Composer;
 use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
-use Composer\Repository\InstalledRepositoryInterface;
-use Composer\Util\Filesystem;
 use FilesystemIterator;
 use Iterator;
 use RecursiveDirectoryIterator;
@@ -16,27 +13,9 @@ use RecursiveIteratorIterator;
 use RegexIterator;
 
 class RecipeInstaller extends LibraryInstaller {
-    public function __construct(
-        IOInterface $io,
-        Composer $composer,
-        $type = 'silverstripe-recipe',
-        Filesystem $filesystem = null,
-        BinaryInstaller $binaryInstaller = null
-    ) {
-        parent::__construct($io, $composer, $type, $filesystem, $binaryInstaller);
-    }
 
-    public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
-    {
-        parent::install($repo, $package);
-
-        // Copy project files to root
-        $destinationPath = getcwd();
-        $name = $package->getName();
-        $extra = $package->getExtra();
-        if (isset($extra['project-files'])) {
-            $this->installProjectFiles($name, $this->getInstallPath($package), $destinationPath, $extra['project-files']);
-        }
+    public function __construct(IOInterface $io, Composer $composer) {
+        parent::__construct($io, $composer, null);
     }
 
     /**
@@ -47,7 +26,7 @@ class RecipeInstaller extends LibraryInstaller {
      * @param string $destinationRoot Base of destination directory (no trailing slash)
      * @param array $filePatterns List of file patterns in wildcard format (e.g. `code/My*.php`)
      */
-    public function installProjectFiles($recipe, $sourceRoot, $destinationRoot, $filePatterns)
+    protected function installProjectFiles($recipe, $sourceRoot, $destinationRoot, $filePatterns)
     {
         $fileIterator = $this->getFileIterator($sourceRoot, $filePatterns);
         foreach($fileIterator as $path => $info) {
@@ -71,7 +50,7 @@ class RecipeInstaller extends LibraryInstaller {
      * @param array $patterns List of wildcard patterns to match
      * @return Iterator File iterator, where key is path and value is file info object
      */
-    public function getFileIterator($sourceRoot, $patterns) {
+    protected function getFileIterator($sourceRoot, $patterns) {
         // Build regexp pattern
         $expressions = [];
         foreach($patterns as $pattern) {
@@ -105,5 +84,24 @@ class RecipeInstaller extends LibraryInstaller {
             return preg_quote($part, '#');
         }, $sourceParts);
         return implode('(.+)', $regexParts);
+    }
+
+    /**
+     * @param PackageInterface $package
+     */
+    public function installLibrary(PackageInterface $package)
+    {
+        // Copy project files to root
+        $destinationPath = getcwd();
+        $name = $package->getName();
+        $extra = $package->getExtra();
+        if (isset($extra['project-files'])) {
+            $this->installProjectFiles(
+                $name,
+                $this->getInstallPath($package),
+                $destinationPath,
+                $extra['project-files']
+            );
+        }
     }
 }
