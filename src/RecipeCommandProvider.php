@@ -15,7 +15,7 @@ class RecipeCommandProvider implements CommandProvider
     public function getCommands()
     {
         return [
-            new InlineRecipeCommand()
+            new RequireRecipeCommand()
         ];
     }
 }

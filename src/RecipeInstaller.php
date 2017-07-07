@@ -92,7 +92,7 @@ class RecipeInstaller extends LibraryInstaller {
     public function installLibrary(PackageInterface $package)
     {
         // Check if silverstripe-recipe type
-        if ($package->getType() !== RecipePlugin::RECIPE) {
+        if ($package->getType() !== 'silverstripe-recipe') {
             return;
         }
 

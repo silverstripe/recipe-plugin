@@ -21,12 +21,6 @@ use Composer\Plugin\Capability\CommandProvider;
  */
 class RecipePlugin implements PluginInterface, EventSubscriberInterface, Capable
 {
-
-    /**
-     * Recipe type
-     */
-    const RECIPE = 'silverstripe-recipe';
-
     public function activate(Composer $composer, IOInterface $io)
     {
     }
