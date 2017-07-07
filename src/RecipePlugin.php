@@ -10,16 +10,26 @@ use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
+use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
+use Composer\Plugin\Capability\CommandProvider;
 
 /**
  * Register the RecipeInstaller
  *
  * Credit to http://stackoverflow.com/questions/27194348/get-package-install-path-from-composer-script-composer-api
  */
-class RecipePlugin implements PluginInterface, EventSubscriberInterface
+class RecipePlugin implements PluginInterface, EventSubscriberInterface, Capable
 {
-    public function activate(Composer $composer, IOInterface $io) { }
+
+    /**
+     * Recipe type
+     */
+    const RECIPE = 'silverstripe-recipe';
+
+    public function activate(Composer $composer, IOInterface $io)
+    {
+    }
 
     public static function getSubscribedEvents()
     {
@@ -33,7 +43,8 @@ class RecipePlugin implements PluginInterface, EventSubscriberInterface
      *
      * @param PackageEvent $event
      */
-    public function installPackage(PackageEvent $event) {
+    public function installPackage(PackageEvent $event)
+    {
         $package = $this->getOperationPackage($event);
         if ($package) {
             $installer = new RecipeInstaller($event->getIO(), $event->getComposer());
@@ -57,5 +68,12 @@ class RecipePlugin implements PluginInterface, EventSubscriberInterface
             return $operation->getPackage();
         }
         return null;
+    }
+
+    public function getCapabilities()
+    {
+        return [
+            CommandProvider::class => RecipeCommandProvider::class
+        ];
     }
 }

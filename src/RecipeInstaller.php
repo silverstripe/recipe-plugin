@@ -91,6 +91,11 @@ class RecipeInstaller extends LibraryInstaller {
      */
     public function installLibrary(PackageInterface $package)
     {
+        // Check if silverstripe-recipe type
+        if ($package->getType() !== RecipePlugin::RECIPE) {
+            return;
+        }
+
         // Copy project files to root
         $destinationPath = getcwd();
         $name = $package->getName();
