@@ -10,7 +10,6 @@ use MongoDB\Driver\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class RequireRecipeCommand extends BaseCommand
@@ -26,8 +25,8 @@ class RequireRecipeCommand extends BaseCommand
         );
         $this->addArgument(
             'version',
-            InputArgument::REQUIRED,
-            'Version to require'
+            InputArgument::OPTIONAL,
+            'Version or constraint to require'
         );
         $this->addUsage('silverstripe/recipe-blogging 1.0.0');
         $this->setHelp(
@@ -53,60 +52,84 @@ HELP
 
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        // Get args and existing composer data
         $recipe = $input->getArgument('recipe');
-        $version = $input->getArgument('version');
+        $constraint = $input->getArgument('version');
 
-        // Get existing composer data
-        $composerData = $this->loadComposer(getcwd());
-        if (isset($composerData['provide'][$recipe])) {
-            $output->writeln("<error>This recipe is already added to provide</error>");
-            return -1;
+        // Check if this is already installed
+        $installedVersion = $this->findInstalledVersion($recipe);
+
+        // Notify users of which version is being updated
+        if ($installedVersion) {
+            if ($constraint) {
+                $output->writeln(
+                    "Updating existing recipe from <info>{$installedVersion}</info> to <info>{$constraint}</info>"
+                );
+            } else {
+                // Show a guessed constraint
+                $constraint = $this->findBestConstraint($installedVersion);
+                if ($constraint) {
+                    $output->writeln(
+                        "Updating existing recipe from <info>{$installedVersion}</info> to <info>{$constraint}</info> "
+                        . "(auto-detected constraint)"
+                    );
+                } else {
+                    $output->writeln(
+                        "Updating existing recipe from <info>{$installedVersion}</info> to latest version"
+                    );
+                }
+            }
         }
 
         // Ensure composer require includes this recipe
-        $returnCode = $this->requireRecipe($output, $recipe, $version);
+        $returnCode = $this->requireRecipe($output, $recipe, $constraint);
         if ($returnCode) {
             return $returnCode;
         }
 
         // Get composer data for both root and newly installed recipe
-        $composerData = $this->loadComposer(getcwd());
-        $recipeData = $this->loadComposer(getcwd().'/vendor/'.$recipe);
+        $composerData = $this->loadComposer(getcwd() .'/composer.json');
+        $recipeData = $this->loadComposer(getcwd().'/vendor/'.$recipe.'/composer.json');
 
         // Promote all dependencies
         if (!empty($recipeData['require'])) {
-            $output->writeln("Inlining all dependencies for recipe <info>$recipe</info>:");
+            $output->writeln("Inlining all dependencies for recipe <info>{$recipe}</info>:");
             foreach ($recipeData['require'] as $dependencyName => $dependencyVersion) {
-                $output->writeln(" * Inline dependency <info>$dependencyName</info> as <info>$dependencyVersion</info>");
+                $output->writeln(
+                    " * Inline dependency <info>{$dependencyName}</info> as <info>{$dependencyVersion}</info>"
+                );
                 $composerData['require'][$dependencyName] = $dependencyVersion;
             }
         }
 
         // Move recipe from 'require' to 'provide'
+        $installedVersion = $this->findInstalledVersion($recipe) ?: $installedVersion;
         unset($composerData['require'][$recipe]);
         if (!isset($composerData['provide'])) {
             $composerData['provide'] = [];
         }
-        $composerData['provide'][$recipe] = $version;
+        $composerData['provide'][$recipe] = $installedVersion;
 
         // Update composer.json and synchronise composer.lock
         $this->saveComposer(getcwd(), $composerData);
-        $this->updateProject($output);
-
-        return $returnCode;
+        return $this->updateProject($output);
     }
 
     /**
      * Load composer data from the given directory
      *
-     * @param string $directory
+     * @param string $path
+     * @param array|null $default If file doesn't exist use this default. If null, file is mandatory and there is
+     * no default
      * @return array
      */
-    protected function loadComposer($directory)
+    protected function loadComposer($path, $default = null)
     {
-        $path = $directory.'/composer.json';
         if (!file_exists($path)) {
-            throw new BadMethodCallException("Could not find composer.json");
+            if (isset($default)) {
+                return $default;
+            }
+            throw new BadMethodCallException("Could not find " . basename($path));
         }
         $data = json_decode(file_get_contents($path), true);
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -137,18 +160,21 @@ HELP
 
     /**
      * @param OutputInterface $output
-     * @param $recipe
-     * @param $version
+     * @param string $recipe
+     * @param string $constraint
      * @return int
      */
-    protected function requireRecipe(OutputInterface $output, $recipe, $version)
+    protected function requireRecipe(OutputInterface $output, $recipe, $constraint = null)
     {
         /** @var RequireCommand $command */
         $command = $this->getApplication()->find('require');
-        $package = $recipe . ':' . $version;
+        $packages = [$recipe];
+        if ($constraint) {
+            $packages[] = $constraint;
+        }
         $arguments = [
             'command' => 'require',
-            'packages' => [$package],
+            'packages' => $packages,
         ];
         $requireInput = new ArrayInput($arguments);
         $returnCode = $command->run($requireInput, $output);
@@ -169,5 +195,74 @@ HELP
         $requireInput = new ArrayInput($arguments);
         $returnCode = $command->run($requireInput, $output);
         return $returnCode;
+    }
+
+    /**
+     * @param string $recipe
+     * @return string
+     */
+    protected function findInstalledVersion($recipe)
+    {
+        // Check composer.lock file
+        $lockData = $this->loadComposer(getcwd() . '/composer.lock', []);
+        if (isset($lockData['packages'])) {
+            foreach ($lockData['packages'] as $package) {
+                // Get version of installed file
+                if (isset($package['name']) && isset($package['version']) && $package['name'] === $recipe) {
+                    $version = $package['version'];
+                    // Trim leading `v` from `v1.0.0`
+                    if (preg_match('#v([\d.]+)#i', $version)) {
+                        return substr($version, 1);
+                    }
+                    return $version;
+                }
+            }
+        }
+
+        // Check composer.json
+        $composerData = $this->loadComposer(getcwd() . '/composer.json');
+
+        // Check provide for previously inlined recipe
+        if (isset($composerData['provide'][$recipe])) {
+            return $composerData['provide'][$recipe];
+        }
+
+        // Check existing constraints, or installed version
+        if (isset($composerData['require'][$recipe])) {
+            return $composerData['require'][$recipe];
+        }
+        return null;
+    }
+
+    /**
+     * Guess constraint to use if not provided
+     *
+     * @param string $existingVersion Known installed version
+     * @return string
+     */
+    protected function findBestConstraint($existingVersion)
+    {
+        // Cannot guess without existing version
+        if (!$existingVersion) {
+            return null;
+        }
+
+        // Existing version is already a ^1.0.0 or ~1.0.0 constraint
+        if (preg_match('#^[~^]#', $existingVersion)) {
+            return $existingVersion;
+        }
+
+        // Existing version is already a dev constraint
+        if (stristr($existingVersion, 'dev') !== false) {
+            return $existingVersion;
+        }
+
+        // Numeric-only version maps to semver constraint
+        if (preg_match('#^([\d.]+)$#', $existingVersion)) {
+            return "^{$existingVersion}";
+        }
+
+        // Cannot guess; Let composer choose (equivalent to `composer require vendor/library`)
+        return null;
     }
 }
