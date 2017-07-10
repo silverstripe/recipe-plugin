@@ -70,16 +70,18 @@ manually, and the recipe will need to be included with `require` subsequently.
 Note that using this method it's not necessary to include the `silverstripe/recipe-plugin` in the root project
 for this to work.
 
-## Building a recipe
+## Recipe composer.json schema
 
 Recipe types should follow the following rules:
 
- - No mandatory resources excluding project files
- - Should require any `autoload` of the following composer settings, as these are discarded on inline.
-   Likewise any `dev` options, as these are ignored outside of the root project. The exception to this
-   is when these values are useful as a base project only.
- - Library type must be 'silverstripe-recipe'
- - Library must have `silverstripe/recipe-plugin` as a dependency.
+ - No mandatory resources, other than project files.
+ - Recipes must not rely on `autoload` as this are discarded on inline.
+   Likewise any `*-dev` or other root-only options should not be used, as these are ignored outside of the root project.
+   The exception to this is when these values are useful as a base project only.
+ - The `type` must be `silverstripe-recipe`
+ - The `require` must have `silverstripe/recipe-plugin` as a dependency.
+ - `extra.project-files` must be declared as a list of wildcard patterns, matching the files in the recipe root
+   as they should be copied to the root project. The relative paths of these resources are equivalent.
 
 An example recipe:
 
@@ -96,7 +98,8 @@ An example recipe:
     },
     "extra": {
         "project-files": [
-            "mysite/_config/blogsettings.yml"
+            "mysite/_config/*.yml",
+            "mysite/code/MyBlogPage.php"
         ]
     },
     "prefer-stable": true,
