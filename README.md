@@ -85,7 +85,7 @@ An example recipe:
 
 ```json
 {
-    "name": "silverstripe/example-recipe,
+    "name": "silverstripe/example-recipe",
     "description": "Example silverstripe recipe",
     "type": "silverstripe-recipe",
     "require": {
