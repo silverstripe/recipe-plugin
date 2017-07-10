@@ -10,9 +10,11 @@ use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
+use Composer\Plugin\Capability\CommandProvider;
 use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
-use Composer\Plugin\Capability\CommandProvider;
+use Composer\Script\Event;
+use LogicException;
 
 /**
  * Register the RecipeInstaller
@@ -28,6 +30,7 @@ class RecipePlugin implements PluginInterface, EventSubscriberInterface, Capable
     public static function getSubscribedEvents()
     {
         return [
+            'post-create-project-cmd' => 'cleanupProject',
             'post-package-update' => 'installPackage',
             'post-package-install' => 'installPackage',
         ];
@@ -45,6 +48,39 @@ class RecipePlugin implements PluginInterface, EventSubscriberInterface, Capable
             $installer = new RecipeInstaller($event->getIO(), $event->getComposer());
             $installer->installLibrary($package);
         }
+    }
+
+    /**
+     * Cleanup the root package on create-project
+     *
+     * @param Event $event
+     */
+    public function cleanupProject(Event $event)
+    {
+        $path = getcwd() . '/composer.json';
+
+        // Load composer data
+        $data = json_decode(file_get_contents($path), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new LogicException("Invalid composer.json with error: " . json_last_error_msg());
+        }
+
+        // Remove project-files from project
+        if (isset($data['extra']['project-files'])) {
+            unset($data['extra']['project-files']);
+        }
+
+        // Clean empty extra key
+        if (empty($data['extra'])) {
+            unset($data['extra']);
+        }
+
+        // Save back to composer.json
+        $content = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if (json_last_error()) {
+            throw new LogicException("Invalid composer.json data with error: " . json_last_error_msg());
+        }
+        file_put_contents($path, $content);
     }
 
     /**
