@@ -52,7 +52,7 @@ class RecipeInstaller extends LibraryInstaller {
                     );
                 }
             } else {
-                $this->io->write(" - Installing <info>$relativePath</info>");
+                $this->io->write("  - Copying <info>$relativePath</info>");
                 $this->filesystem->ensureDirectoryExists(dirname($destination));
                 copy($path, $destination);
             }
