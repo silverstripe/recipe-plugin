@@ -2,23 +2,20 @@
 
 namespace SilverStripe\RecipePlugin;
 
+use BadMethodCallException;
 use Composer\Command\BaseCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * Provides the 'require-recipe' command which allows a new recipe to be installed, but also
- * soft-updates any existing recipe.
- */
-class RequireRecipeCommand extends BaseCommand
+class UpdateRecipeCommand extends BaseCommand
 {
     use RecipeCommandBehaviour;
 
     public function configure()
     {
-        $this->setName('require-recipe');
-        $this->setDescription('Invoke this command to inline a recipe into your root composer.json');
+        $this->setName('update-recipe');
+        $this->setDescription('Invoke this command to update an existing recipe');
         $this->addArgument(
             'recipe',
             InputArgument::REQUIRED,
@@ -27,26 +24,13 @@ class RequireRecipeCommand extends BaseCommand
         $this->addArgument(
             'version',
             InputArgument::OPTIONAL,
-            'Version or constraint to require'
+            'Version or constraint to update to'
         );
-        $this->addUsage('silverstripe/recipe-blogging 1.0.0');
+        $this->addUsage('silverstripe/recipe-blogging');
         $this->setHelp(
             <<<HELP
-Running this command will inline any given recipe into your composer.json, allowing you to
-modify it as though these dependencies were natively part of your own.
-
-Running command <info>composer require-recipe silverstripe/recipe-blogging 1.0.0</info> adds the following:
-
-<comment>
-    "require": {
-        "silverstripe/blog": "3.0.0",
-        "silverstripe/lumberjack": "3.0.1",
-        "silverstripe/comments": "2.1.0"
-    },
-    "provide": {
-        "silverstripe/recipe-blogging": "1.0.0"
-    }
-</comment>
+This command will detect any recipe that is installed, whether inline or required directly, and update to
+the latest version based on stability settings.
 HELP
         );
     }
@@ -58,8 +42,13 @@ HELP
 
         // Check if this is already installed and notify users
         $installedVersion = $this->findInstalledVersion($recipe);
+        if (!$installedVersion) {
+            throw new BadMethodCallException(
+                "Recipe {$recipe} is not installed. Please install with require or require-recipe first"
+            );
+        }
 
-        // Install recipe
+        // Update recipe
         return $this->installRecipe($output, $recipe, $constraint, $installedVersion);
     }
 }

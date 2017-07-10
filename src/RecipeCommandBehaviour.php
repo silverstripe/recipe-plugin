@@ -182,4 +182,75 @@ trait RecipeCommandBehaviour
         // Cannot guess; Let composer choose (equivalent to `composer require vendor/library`)
         return null;
     }
+
+    /**
+     * Install or update a recipe with a given constraint and current version
+     *
+     * @param OutputInterface $output
+     * @param string $recipe
+     * @param string $constraint
+     * @param string $installedVersion
+     * @return int
+     */
+    protected function installRecipe(OutputInterface $output, $recipe, $constraint, $installedVersion)
+    {
+        if ($installedVersion) {
+            if ($constraint) {
+                $output->writeln(
+                    "Updating existing recipe from <info>{$installedVersion}</info> to <info>{$constraint}</info>"
+                );
+            } else {
+                // Show a guessed constraint
+                $constraint = $this->findBestConstraint($installedVersion);
+                if ($constraint) {
+                    $output->writeln(
+                        "Updating existing recipe from <info>{$installedVersion}</info> to <info>{$constraint}</info> "
+                        . "(auto-detected constraint)"
+                    );
+                } else {
+                    $output->writeln(
+                        "Updating existing recipe from <info>{$installedVersion}</info> to latest version"
+                    );
+                }
+            }
+        }
+
+        // Ensure composer require includes this recipe
+        $returnCode = $this->requireRecipe($output, $recipe, $constraint);
+        if ($returnCode) {
+            return $returnCode;
+        }
+
+        // Begin modification of composer.json
+        $composerData = $this->loadComposer(getcwd() . '/composer.json');
+
+        // Get composer data for both root and newly installed recipe
+        $installedRecipe = $this
+            ->getComposer()
+            ->getRepositoryManager()
+            ->getLocalRepository()
+            ->findPackage($recipe, '*');
+        if ($installedRecipe) {
+            $output->writeln("Inlining all dependencies for recipe <info>{$recipe}</info>:");
+            foreach ($installedRecipe->getRequires() as $requireName => $require) {
+                $requireVersion = $require->getPrettyConstraint();
+                $output->writeln(
+                    " * Inline dependency <info>{$requireName}</info> as <info>{$requireVersion}</info>"
+                );
+                $composerData['require'][$requireName] = $requireVersion;
+            }
+        }
+
+        // Move recipe from 'require' to 'provide'
+        $installedVersion = $this->findInstalledVersion($recipe) ?: $installedVersion;
+        unset($composerData['require'][$recipe]);
+        if (!isset($composerData['provide'])) {
+            $composerData['provide'] = [];
+        }
+        $composerData['provide'][$recipe] = $installedVersion;
+
+        // Update composer.json and synchronise composer.lock
+        $this->saveComposer(getcwd(), $composerData);
+        return $this->updateProject($output);
+    }
 }
