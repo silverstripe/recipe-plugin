@@ -25,7 +25,7 @@ These recipes allow for the following features:
 Recipes can be introduced to any existing project (even if not created on a silverstripe base project)
 
 
-    :::
+    :::shell
     $ composer init
     $ composer require silverstripe/recipe-plugin ^0.1
     $ composer require-recipe silverstripe/recipe-cms ^4.0@dev
@@ -36,7 +36,7 @@ directly and inline this as a subsequent command. This is necessary to make the 
 to the command line.
 
 
-    :::
+    :::shell
     $ composer init
     $ composer require silverstripe/recipe-cms ^4.0@dev
     $ composer upgrade-recipe silverstripe/recipe-cms
@@ -45,7 +45,7 @@ to the command line.
 Alternatively you can create a new project based on an existing recipe
 
 
-    :::
+    :::shell
     $ composer create-project silverstripe/recipe-cms ./myssproject ^4.0@dev
 
 
@@ -58,7 +58,7 @@ When upgrading a version constraint is recommended, but not necessary. If omitte
 version will be detected, and a safe default chosen.
 
 
-    :::
+    :::shell
     $ composer upgrade-recipe silverstripe/recipe-cms ^1.0@dev
 
 
