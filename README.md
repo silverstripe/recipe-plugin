@@ -58,6 +58,15 @@ version will be detected, and a safe default chosen.
 $ composer upgrade-recipe silverstripe/recipe-cms ^1.0@dev
 ```
 
+## Removing recipes
+
+As installation of a recipe inlines all dependencies and passes ownership to the root project,
+there is no automatic removal process. To remove a recipe, you should manually remove any
+required module that is no longer desired via `composer remove <module>`.
+
+The `provide` reference to the recipe can also be safely removed, although it has no practical result
+other than to disable future calls to `upgrade-recipe` on this recipe.
+
 ## Installing or upgrading recipes without inlining them
 
 If desired, the optional inline behaviour of recipes can be omitted. Simply use the composer commands `require` and
