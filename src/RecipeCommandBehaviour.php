@@ -74,6 +74,9 @@ trait RecipeCommandBehaviour
             throw new InvalidArgumentException("Invalid composer.json data with error: " . json_last_error_msg());
         }
         file_put_contents($path, $content);
+
+        // Reset composer object
+        $this->resetComposer();
     }
 
     /**
@@ -235,7 +238,7 @@ trait RecipeCommandBehaviour
             foreach ($installedRecipe->getRequires() as $requireName => $require) {
                 $requireVersion = $require->getPrettyConstraint();
                 $output->writeln(
-                    " * Inline dependency <info>{$requireName}</info> as <info>{$requireVersion}</info>"
+                    "  - Inlining <info>{$requireName}</info> (<comment>{$requireVersion}</comment>)"
                 );
                 $composerData['require'][$requireName] = $requireVersion;
             }

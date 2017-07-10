@@ -28,6 +28,7 @@ class RecipePlugin implements PluginInterface, EventSubscriberInterface, Capable
     public static function getSubscribedEvents()
     {
         return [
+            'post-package-update' => 'installPackage',
             'post-package-install' => 'installPackage',
         ];
     }

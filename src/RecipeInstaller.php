@@ -29,17 +29,33 @@ class RecipeInstaller extends LibraryInstaller {
     protected function installProjectFiles($recipe, $sourceRoot, $destinationRoot, $filePatterns)
     {
         $fileIterator = $this->getFileIterator($sourceRoot, $filePatterns);
+        $any = false;
         foreach($fileIterator as $path => $info) {
             $relativePath = substr($path, strlen($sourceRoot));
             $destination = $destinationRoot . $relativePath;
 
-            // Only copy non-existent files
-            if (file_exists($destination)) {
-                continue;
+            // Write header
+            if (!$any) {
+                $this->io->write("Installing project files for recipe <info>{$recipe}</info>:");
+                $any = true;
             }
-            $this->io->write("Installing recipe <info>$recipe</info> file <info>$relativePath</info>");
-            $this->filesystem->ensureDirectoryExists(dirname($destination));
-            copy($path, $destination);
+
+            // Check if file exists
+            if (file_exists($destination)) {
+                if (file_get_contents($destination) === file_get_contents($path)) {
+                    $this->io->write(
+                        "  - Skipping <info>$relativePath</info> (<comment>existing, but unchanged</comment>)"
+                    );
+                } else {
+                    $this->io->write(
+                        "  - Skipping <info>$relativePath</info> (<comment>existing and modified in project</comment>)"
+                    );
+                }
+            } else {
+                $this->io->write(" - Installing <info>$relativePath</info>");
+                $this->filesystem->ensureDirectoryExists(dirname($destination));
+                copy($path, $destination);
+            }
         }
     }
 
