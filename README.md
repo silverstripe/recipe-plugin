@@ -24,30 +24,27 @@ These recipes allow for the following features:
 
 Recipes can be introduced to any existing project (even if not created on a silverstripe base project)
 
-
-    :::shell
-    $ composer init
-    $ composer require silverstripe/recipe-plugin ^0.1
-    $ composer require-recipe silverstripe/recipe-cms ^4.0@dev
-
+```shell
+$ composer init
+$ composer require silverstripe/recipe-plugin ^0.1
+$ composer require-recipe silverstripe/recipe-cms ^4.0@dev
+````
 
 Alternatively, instead of having to install the recipe-plugin manually, you can require the recipe
 directly and inline this as a subsequent command. This is necessary to make the new commands available
 to the command line.
 
-
-    :::shell
-    $ composer init
-    $ composer require silverstripe/recipe-cms ^4.0@dev
-    $ composer upgrade-recipe silverstripe/recipe-cms
-
+```shell
+$ composer init
+$ composer require silverstripe/recipe-cms ^4.0@dev
+$ composer upgrade-recipe silverstripe/recipe-cms
+```
 
 Alternatively you can create a new project based on an existing recipe
 
-
-    :::shell
-    $ composer create-project silverstripe/recipe-cms ./myssproject ^4.0@dev
-
+```shell
+$ composer create-project silverstripe/recipe-cms ./myssproject ^4.0@dev
+```
 
 ## Upgrading recipes
 
@@ -57,10 +54,9 @@ via `composer upgrade-recipe`.
 When upgrading a version constraint is recommended, but not necessary. If omitted, then the existing installed
 version will be detected, and a safe default chosen.
 
-
-    :::shell
-    $ composer upgrade-recipe silverstripe/recipe-cms ^1.0@dev
-
+```shell
+$ composer upgrade-recipe silverstripe/recipe-cms ^1.0@dev
+```
 
 ## Installing or upgrading recipes without inlining them
 
@@ -87,22 +83,23 @@ Recipe types should follow the following rules:
 
 An example recipe:
 
-    :::json
-    {
-        "name": "silverstripe/example-recipe,
-        "description": "Example silverstripe recipe",
-        "type": "silverstripe-recipe",
-        "require": {
-            "silverstripe/recipe-plugin": "^0.1",
-            "silverstripe/recipe-cms": "^4.0",
-            "silverstripe/blog": "^3.0@dev",
-            "silverstripe/lumberjack": "^2.1@dev",
-        },
-        "extra": {
-            "project-files": [
-                "mysite/_config/blogsettings.yml"
-            ]
-        },
-        "prefer-stable": true,
-        "minimum-stability": "dev"
-    }
+```json
+{
+    "name": "silverstripe/example-recipe,
+    "description": "Example silverstripe recipe",
+    "type": "silverstripe-recipe",
+    "require": {
+        "silverstripe/recipe-plugin": "^0.1",
+        "silverstripe/recipe-cms": "^4.0",
+        "silverstripe/blog": "^3.0@dev",
+        "silverstripe/lumberjack": "^2.1@dev",
+    },
+    "extra": {
+        "project-files": [
+            "mysite/_config/blogsettings.yml"
+        ]
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev"
+}
+```
