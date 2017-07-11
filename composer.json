@@ -1,5 +1,5 @@
 {
-    "name": "tractorcow/recipe-plugin",
+    "name": "silverstripe/recipe-plugin",
     "description": "Helper plugin to install SilverStripe recipes",
     "type": "composer-plugin",
     "license": "BSD-3-Clause",
