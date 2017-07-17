@@ -2,9 +2,11 @@
 
 namespace SilverStripe\RecipePlugin;
 
+use Composer\Factory;
 use Composer\Installer\LibraryInstaller;
 use Composer\Composer;
 use Composer\IO\IOInterface;
+use Composer\Json\JsonFile;
 use Composer\Package\PackageInterface;
 use FilesystemIterator;
 use Iterator;
@@ -28,11 +30,19 @@ class RecipeInstaller extends LibraryInstaller {
      */
     protected function installProjectFiles($recipe, $sourceRoot, $destinationRoot, $filePatterns)
     {
+        // load composer json data
+        $composerFile = new JsonFile(Factory::getComposerFile(), null, $this->io);
+        $composerData = $composerFile->read();
+        $installedFiles = isset($composerData['extra'][RecipePlugin::PROJECT_FILES_INSTALLED])
+            ? $composerData['extra'][RecipePlugin::PROJECT_FILES_INSTALLED]
+            : [];
+
+        // Load all project files
         $fileIterator = $this->getFileIterator($sourceRoot, $filePatterns);
         $any = false;
         foreach($fileIterator as $path => $info) {
-            $relativePath = substr($path, strlen($sourceRoot));
-            $destination = $destinationRoot . $relativePath;
+            $destination = $destinationRoot . substr($path, strlen($sourceRoot));
+            $relativePath = substr($path, strlen($sourceRoot) + 1); // Name path without leading '/'
 
             // Write header
             if (!$any) {
@@ -51,11 +61,32 @@ class RecipeInstaller extends LibraryInstaller {
                         "  - Skipping <info>$relativePath</info> (<comment>existing and modified in project</comment>)"
                     );
                 }
+            } elseif (in_array($relativePath, $installedFiles)) {
+                // Don't re-install previously installed files that have been deleted
+                $this->io->write(
+                    "  - Skipping <info>$relativePath</info> (<comment>previously installed</comment>)"
+                );
             } else {
+                $any++;
                 $this->io->write("  - Copying <info>$relativePath</info>");
                 $this->filesystem->ensureDirectoryExists(dirname($destination));
                 copy($path, $destination);
             }
+
+            // Add file to installed (even if already exists)
+            if (!in_array($relativePath, $installedFiles)) {
+                $installedFiles[] = $relativePath;
+            }
+        }
+
+        // If any files are written, modify composer.json with newly installed files
+        if ($installedFiles) {
+            sort($installedFiles);
+            if (!isset($composerData['extra'])) {
+                $composerData['extra'] = [];
+            }
+            $composerData['extra'][RecipePlugin::PROJECT_FILES_INSTALLED] = $installedFiles;
+            $composerFile->write($composerData);
         }
     }
 
@@ -108,20 +139,22 @@ class RecipeInstaller extends LibraryInstaller {
     public function installLibrary(PackageInterface $package)
     {
         // Check if silverstripe-recipe type
-        if ($package->getType() !== 'silverstripe-recipe') {
+        if ($package->getType() !== RecipePlugin::RECIPE_TYPE) {
             return;
         }
 
+        // Find project path
+        $destinationPath = dirname(realpath(Factory::getComposerFile()));
+
         // Copy project files to root
-        $destinationPath = getcwd();
         $name = $package->getName();
         $extra = $package->getExtra();
-        if (isset($extra['project-files'])) {
+        if (isset($extra[RecipePlugin::PROJECT_FILES])) {
             $this->installProjectFiles(
                 $name,
                 $this->getInstallPath($package),
                 $destinationPath,
-                $extra['project-files']
+                $extra[RecipePlugin::PROJECT_FILES]
             );
         }
     }
