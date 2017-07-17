@@ -107,7 +107,7 @@ trait RecipeCommandBehaviour
         // Check requires
         $requires = $this->getComposer()->getPackage()->getRequires();
         if (isset($requires[$recipe])) {
-            return $provides[$recipe]->getPrettyConstraint();
+            return $requires[$recipe]->getPrettyConstraint();
         }
 
         // No existing version
