@@ -14,7 +14,7 @@ These recipes allow for the following features:
  - Recipes also can be used as a base composer project.
  - A `require-recipe` command to inline a recipe into the root composer.json, allowing the developer to customise the
    recipe dependencies without mandating the inclusion of all requirements directly.
- - An `upgrade-recipe` command to upgrade to a newer version of a recipe.
+ - An `update-recipe` command to upgrade to a newer version of a recipe.
 
 ## Example output
 
@@ -26,37 +26,79 @@ Recipes can be introduced to any existing project (even if not created on a silv
 
 ```shell
 $ composer init
-$ composer require silverstripe/recipe-plugin ^0.1
-$ composer require-recipe silverstripe/recipe-cms ^4.0@dev
+$ composer require silverstripe/recipe-cms ^1.0@dev
 ````
-
-Alternatively, instead of having to install the recipe-plugin manually, you can require the recipe
-directly and inline this as a subsequent command. This is necessary to make the new commands available
-to the command line.
-
-```shell
-$ composer init
-$ composer require silverstripe/recipe-cms ^4.0@dev
-$ composer upgrade-recipe silverstripe/recipe-cms
-```
 
 Alternatively you can create a new project based on an existing recipe
 
 ```shell
-$ composer create-project silverstripe/recipe-cms ./myssproject ^4.0@dev
+$ composer create-project silverstripe/recipe-cms ./myssproject ^1.0@dev
 ```
 
-## Upgrading recipes
+## Inlining recipes
 
-Any existing recipe, whether installed via `composer require` or `composer require-recipe` can be safely upgraded
-via `composer upgrade-recipe`.
+You can "inline" either a previously installed recipe, or a new one that you would like to include
+dependencies for in your main project. By inlining a recipe, you promote its requirements, as well as
+its project files, up into your main project, and remove the recipe itself from your dependencies.
 
-When upgrading a version constraint is recommended, but not necessary. If omitted, then the existing installed
-version will be detected, and a safe default chosen.
+This can be done with either `update-recipe`, which will update a recipe, or `require-recipe` which will
+install a new recipe.
+
+Note that if you with to run this command you must first install either a recipe via normal composer
+commands, or install the recipe plugin:
 
 ```shell
-$ composer upgrade-recipe silverstripe/recipe-cms ^1.0@dev
+$ composer init
+$ composer require silverstripe/recipe-plugin ^0.1
+$ composer require-recipe silverstripe/recipe-cms ^1.0@dev
 ```
+
+or
+
+```shell
+$ composer init
+$ composer require silverstripe/recipe-cms ^1.0@dev
+$ composer update-recipe silverstripe/recipe-cms
+```
+
+## Removing recipe dependencies or files
+
+Any project file installed via a recipe, or any module installed by inlining a recipe, can be easily removed.
+Subsequent updates to this recipe will not re-install any of those files or dependencies.
+
+In order to ensure this, a record of all inlined modules, and all installed files are stored in composer.json
+as below.
+
+```json
+{
+    "extra": {
+        "project-files-installed": [
+            "mysite/code/Page.php",
+            "mysite/code/PageController.php"
+        ],
+        "project-dependencies-installed": {
+            "silverstripe/admin": "1.0.x-dev",
+            "silverstripe/asset-admin": "1.0.x-dev",
+            "silverstripe/campaign-admin": "1.0.x-dev"
+        }
+    }
+}
+```
+
+To remove a file, simply delete it from the folder your project is installed in, but don't modify
+`project-files-installed` (as this is how composer knows what not to re-install).
+
+Likewise to remove a module, use `composer remove <module>` and it will be removed. As above, don't
+modify `project-dependencies-instaleld`, otherwise that module will be re-installed on subsequent
+`composer update-recipe`.
+
+## Un-doing a deleted project file / dependency
+
+If you have deleted a module or file and want to re-install it you should remove the appropriate
+entry from either 'project-files-installed' or 'project-dependencies-installed' and then run
+`composer update-recipe <recipe>` again.
+
+The file or module will be re-installed.
 
 ## Removing recipes
 
@@ -65,7 +107,7 @@ there is no automatic removal process. To remove a recipe, you should manually r
 required module that is no longer desired via `composer remove <module>`.
 
 The `provide` reference to the recipe can also be safely removed, although it has no practical result
-other than to disable future calls to `upgrade-recipe` on this recipe.
+other than to disable future calls to `update-recipe` on this recipe.
 
 ## Installing or upgrading recipes without inlining them
 
@@ -101,7 +143,7 @@ An example recipe:
     "type": "silverstripe-recipe",
     "require": {
         "silverstripe/recipe-plugin": "^0.1",
-        "silverstripe/recipe-cms": "^4.0",
+        "silverstripe/recipe-cms": "^1.0",
         "silverstripe/blog": "^3.0@dev",
         "silverstripe/lumberjack": "^2.1@dev",
     },

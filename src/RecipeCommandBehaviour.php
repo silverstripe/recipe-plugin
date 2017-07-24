@@ -2,11 +2,12 @@
 
 namespace SilverStripe\RecipePlugin;
 
-use BadMethodCallException;
 use Composer\Command\RequireCommand;
 use Composer\Command\UpdateCommand;
 use Composer\Composer;
-use MongoDB\Driver\Exception\InvalidArgumentException;
+use Composer\Factory;
+use Composer\IO\IOInterface;
+use Composer\Json\JsonFile;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -34,50 +35,9 @@ trait RecipeCommandBehaviour
     public abstract function resetComposer();
 
     /**
-     * Load composer data from the given directory
-     *
-     * @param string $path
-     * @param array|null $default If file doesn't exist use this default. If null, file is mandatory and there is
-     * no default
-     * @return array
+     * @return IOInterface
      */
-    protected function loadComposer($path, $default = null)
-    {
-        if (!file_exists($path)) {
-            if (isset($default)) {
-                return $default;
-            }
-            throw new BadMethodCallException("Could not find " . basename($path));
-        }
-        $data = json_decode(file_get_contents($path), true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \LogicException("Invalid composer.json with error: " . json_last_error_msg());
-        }
-        return $data;
-    }
-
-    /**
-     * Save the given data to the composer file in the given directory
-     *
-     * @param string $directory
-     * @param array $data
-     */
-    protected function saveComposer($directory, $data)
-    {
-        $path = $directory.'/composer.json';
-        if (!file_exists($path)) {
-            throw new BadMethodCallException("Could not find composer.json");
-        }
-        $content = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        // Make sure errors are reported
-        if (json_last_error()) {
-            throw new InvalidArgumentException("Invalid composer.json data with error: " . json_last_error_msg());
-        }
-        file_put_contents($path, $content);
-
-        // Reset composer object
-        $this->resetComposer();
-    }
+    abstract public function getIO();
 
     /**
      * @param OutputInterface $output
@@ -147,7 +107,7 @@ trait RecipeCommandBehaviour
         // Check requires
         $requires = $this->getComposer()->getPackage()->getRequires();
         if (isset($requires[$recipe])) {
-            return $provides[$recipe]->getPrettyConstraint();
+            return $requires[$recipe]->getPrettyConstraint();
         }
 
         // No existing version
@@ -224,36 +184,109 @@ trait RecipeCommandBehaviour
             return $returnCode;
         }
 
-        // Begin modification of composer.json
-        $composerData = $this->loadComposer(getcwd() . '/composer.json');
+        // inline all dependencies inline into composer.json
+        $this->modifyComposer(function ($composerData) use ($output, $recipe, $installedVersion) {
+            // Check previously installed, and currently installed modules
+            $require = isset($composerData['require']) ? $composerData['require'] : [];
+            $previouslyInstalled = isset($composerData['extra'][RecipePlugin::PROJECT_DEPENDENCIES_INSTALLED])
+                ? $composerData['extra'][RecipePlugin::PROJECT_DEPENDENCIES_INSTALLED]
+                : [];
 
-        // Get composer data for both root and newly installed recipe
-        $installedRecipe = $this
-            ->getComposer()
-            ->getRepositoryManager()
-            ->getLocalRepository()
-            ->findPackage($recipe, '*');
-        if ($installedRecipe) {
-            $output->writeln("Inlining all dependencies for recipe <info>{$recipe}</info>:");
-            foreach ($installedRecipe->getRequires() as $requireName => $require) {
-                $requireVersion = $require->getPrettyConstraint();
-                $output->writeln(
-                    "  - Inlining <info>{$requireName}</info> (<comment>{$requireVersion}</comment>)"
-                );
-                $composerData['require'][$requireName] = $requireVersion;
+            // Get composer data for both root and newly installed recipe
+            $installedRecipe = $this
+                ->getComposer()
+                ->getRepositoryManager()
+                ->getLocalRepository()
+                ->findPackage($recipe, '*');
+            if ($installedRecipe) {
+                $output->writeln("Inlining all dependencies for recipe <info>{$recipe}</info>:");
+                foreach ($installedRecipe->getRequires() as $requireName => $requireConstraint) {
+                    $requireVersion = $requireConstraint->getPrettyConstraint();
+
+                    // If already installed, upgrade
+                    if (isset($require[$requireName])) {
+                        // Check if upgrade or not
+                        $requireInstalledVersion = $require[$requireName];
+                        if ($requireInstalledVersion === $requireVersion) {
+                            // No need to upgrade
+                            $output->writeln(
+                                "  - Skipping <info>{$requireName}</info> "
+                                . "(Already installed as <comment>{$requireVersion}</comment>)"
+                            );
+                        } else {
+                            // Upgrade obsolete version
+                            $output->writeln(
+                                "  - Inlining <info>{$requireName}</info> "
+                                . "(Updated to <comment>{$requireVersion}</comment> from "
+                                . "<comment>{$requireInstalledVersion}</comment>)"
+                            );
+                            $require[$requireName] = $requireVersion;
+                        }
+                    } elseif (isset($previouslyInstalled[$requireName])) {
+                        // Old module, manually removed
+                        $output->writeln(
+                            "  - Skipping <info>{$requireName}</info> (Manually removed from recipe)"
+                        );
+                    } else {
+                        // New module
+                        $output->writeln(
+                            "  - Inlining <info>{$requireName}</info> (<comment>{$requireVersion}</comment>)"
+                        );
+                        $require[$requireName] = $requireVersion;
+                    }
+
+                    // note dependency as previously installed
+                    $previouslyInstalled[$requireName] = $requireVersion;
+                }
             }
-        }
 
-        // Move recipe from 'require' to 'provide'
-        $installedVersion = $this->findInstalledVersion($recipe) ?: $installedVersion;
-        unset($composerData['require'][$recipe]);
-        if (!isset($composerData['provide'])) {
-            $composerData['provide'] = [];
-        }
-        $composerData['provide'][$recipe] = $installedVersion;
+            // Add new require / extra-installed
+            $composerData['require'] = $require;
+            if ($previouslyInstalled){
+                if (!isset($composerData['extra'])) {
+                    $composerData['extra'] = [];
+                }
+                ksort($previouslyInstalled);
+                $composerData['extra'][RecipePlugin::PROJECT_DEPENDENCIES_INSTALLED] = $previouslyInstalled;
+            }
 
-        // Update composer.json and synchronise composer.lock
-        $this->saveComposer(getcwd(), $composerData);
+            // Move recipe from 'require' to 'provide'
+            $installedVersion = $this->findInstalledVersion($recipe) ?: $installedVersion;
+            unset($composerData['require'][$recipe]);
+            if (!isset($composerData['provide'])) {
+                $composerData['provide'] = [];
+            }
+            $composerData['provide'][$recipe] = $installedVersion;
+            return $composerData;
+        });
+
+        // Update synchronise composer.lock
         return $this->updateProject($output);
+    }
+
+    /**
+     * callback to safely modify composer.json data
+     *
+     * @param callable $callable Callable which will safely take and return the composer data.
+     * This should return false if no content changed, or the updated data
+     */
+    protected function modifyComposer($callable)
+    {
+        // Begin modification of composer.json
+        $composerFile = new JsonFile(Factory::getComposerFile(), null, $this->getIO());
+        $composerData = $composerFile->read();
+
+        // Note: Respect call by ref $composerData
+        $result = $callable($composerData);
+        if ($result === false) {
+            return;
+        }
+        if ($result) {
+            $composerData = $result;
+        }
+
+        // Update composer.json and refresh local composer instance
+        $composerFile->write($composerData);
+        $this->resetComposer();
     }
 }

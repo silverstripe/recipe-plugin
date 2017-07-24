@@ -7,14 +7,15 @@ use Composer\Composer;
 use Composer\DependencyResolver\Operation\InstallOperation;
 use Composer\DependencyResolver\Operation\UpdateOperation;
 use Composer\EventDispatcher\EventSubscriberInterface;
+use Composer\Factory;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
+use Composer\Json\JsonFile;
 use Composer\Package\PackageInterface;
 use Composer\Plugin\Capability\CommandProvider;
 use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
 use Composer\Script\Event;
-use LogicException;
 
 /**
  * Register the RecipeInstaller
@@ -23,6 +24,26 @@ use LogicException;
  */
 class RecipePlugin implements PluginInterface, EventSubscriberInterface, Capable
 {
+    /**
+     * Type of recipe to check for
+     */
+    const RECIPE_TYPE = 'silverstripe-recipe';
+
+    /**
+     * 'extra' key for project files
+     */
+    const PROJECT_FILES = 'project-files';
+
+    /**
+     * 'extra' key for list of project files installed
+     */
+    const PROJECT_FILES_INSTALLED = 'project-files-installed';
+
+    /**
+     * 'extra' key for project dependencies installed
+     */
+    const PROJECT_DEPENDENCIES_INSTALLED = 'project-dependencies-installed';
+
     public function activate(Composer $composer, IOInterface $io)
     {
     }
@@ -57,30 +78,17 @@ class RecipePlugin implements PluginInterface, EventSubscriberInterface, Capable
      */
     public function cleanupProject(Event $event)
     {
-        $path = getcwd() . '/composer.json';
+        $file = new JsonFile(Factory::getComposerFile());
+        $data = $file->read();
 
-        // Load composer data
-        $data = json_decode(file_get_contents($path), true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new LogicException("Invalid composer.json with error: " . json_last_error_msg());
-        }
-
-        // Remove project-files from project
-        if (isset($data['extra']['project-files'])) {
-            unset($data['extra']['project-files']);
-        }
-
-        // Clean empty extra key
+        // Remove project-files from project, and any empty extra
+        unset($data['extra']['project-files']);
         if (empty($data['extra'])) {
             unset($data['extra']);
         }
 
         // Save back to composer.json
-        $content = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if (json_last_error()) {
-            throw new LogicException("Invalid composer.json data with error: " . json_last_error_msg());
-        }
-        file_put_contents($path, $content);
+        $file->write($data);
     }
 
     /**
