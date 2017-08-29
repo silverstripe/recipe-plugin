@@ -44,7 +44,7 @@ its project files, up into your main project, and remove the recipe itself from 
 This can be done with either `update-recipe`, which will update a recipe, or `require-recipe` which will
 install a new recipe.
 
-Note that if you with to run this command you must first install either a recipe via normal composer
+Note that if you wish to run this command you must first install either a recipe via normal composer
 commands, or install the recipe plugin:
 
 ```shell
