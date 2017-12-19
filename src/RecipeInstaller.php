@@ -27,14 +27,16 @@ class RecipeInstaller extends LibraryInstaller {
      * @param string $sourceRoot Base of source files (no trailing slash)
      * @param string $destinationRoot Base of destination directory (no trailing slash)
      * @param array $filePatterns List of file patterns in wildcard format (e.g. `code/My*.php`)
+     * @param string $registrationKey Registration key for installed files
+     * @param string $name Name of project file type being installed
      */
-    protected function installProjectFiles($recipe, $sourceRoot, $destinationRoot, $filePatterns)
+    protected function installProjectFiles($recipe, $sourceRoot, $destinationRoot, $filePatterns, $registrationKey, $name = 'project')
     {
         // load composer json data
         $composerFile = new JsonFile(Factory::getComposerFile(), null, $this->io);
         $composerData = $composerFile->read();
-        $installedFiles = isset($composerData['extra'][RecipePlugin::PROJECT_FILES_INSTALLED])
-            ? $composerData['extra'][RecipePlugin::PROJECT_FILES_INSTALLED]
+        $installedFiles = isset($composerData['extra'][$registrationKey])
+            ? $composerData['extra'][$registrationKey]
             : [];
 
         // Load all project files
@@ -46,7 +48,7 @@ class RecipeInstaller extends LibraryInstaller {
 
             // Write header
             if (!$any) {
-                $this->io->write("Installing project files for recipe <info>{$recipe}</info>:");
+                $this->io->write("Installing {$name} files for recipe <info>{$recipe}</info>:");
                 $any = true;
             }
 
@@ -85,7 +87,7 @@ class RecipeInstaller extends LibraryInstaller {
             if (!isset($composerData['extra'])) {
                 $composerData['extra'] = [];
             }
-            $composerData['extra'][RecipePlugin::PROJECT_FILES_INSTALLED] = $installedFiles;
+            $composerData['extra'][$registrationKey] = $installedFiles;
             $composerFile->write($composerData);
         }
     }
@@ -143,18 +145,41 @@ class RecipeInstaller extends LibraryInstaller {
             return;
         }
 
+        // Find recipe base dir
+        $recipePath = $this->getInstallPath($package);
+
         // Find project path
-        $destinationPath = dirname(realpath(Factory::getComposerFile()));
+        $projectPath = dirname(realpath(Factory::getComposerFile()));
+
+        // Find public path
+        $candidatePublicPath = $projectPath . DIRECTORY_SEPARATOR . RecipePlugin::PUBLIC_PATH;
+        $publicPath = is_dir($candidatePublicPath) ? $candidatePublicPath : $projectPath;
 
         // Copy project files to root
         $name = $package->getName();
         $extra = $package->getExtra();
+
+        // Install project-files
         if (isset($extra[RecipePlugin::PROJECT_FILES])) {
             $this->installProjectFiles(
                 $name,
-                $this->getInstallPath($package),
-                $destinationPath,
-                $extra[RecipePlugin::PROJECT_FILES]
+                $recipePath,
+                $projectPath,
+                $extra[RecipePlugin::PROJECT_FILES],
+                RecipePlugin::PROJECT_FILES_INSTALLED,
+                'project'
+            );
+        }
+
+        // Install public-files
+        if (isset($extra[RecipePlugin::PUBLIC_FILES])) {
+            $this->installProjectFiles(
+                $name,
+                $recipePath . '/' . RecipePlugin::PUBLIC_PATH,
+                $publicPath,
+                $extra[RecipePlugin::PUBLIC_FILES],
+                RecipePlugin::PUBLIC_FILES_INSTALLED,
+                'public'
             );
         }
     }
