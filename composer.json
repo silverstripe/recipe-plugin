@@ -15,7 +15,10 @@
         }
     },
     "extra": {
-        "class": "SilverStripe\\RecipePlugin\\RecipePlugin"
+        "class": "SilverStripe\\RecipePlugin\\RecipePlugin",
+        "branch-alias": {
+            "dev-master": "1.x-dev"
+        }
     },
     "require": {
         "composer-plugin-api": "^1.1"

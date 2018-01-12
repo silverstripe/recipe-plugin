@@ -133,6 +133,9 @@ Recipe types should follow the following rules:
  - The `require` must have `silverstripe/recipe-plugin` as a dependency.
  - `extra.project-files` must be declared as a list of wildcard patterns, matching the files in the recipe root
    as they should be copied to the root project. The relative paths of these resources are equivalent.
+ - `extra.public-files` must be declared for any files which should be copied to the `public` web folder. If the project
+   in question doesn't have any public folder, these will be copied to root instead. Note that all public files
+   must be committed to the recipe `public` folder.
 
 An example recipe:
 
@@ -151,9 +154,31 @@ An example recipe:
         "project-files": [
             "mysite/_config/*.yml",
             "mysite/code/MyBlogPage.php"
+            "client/src/*"
+        ],
+        "public-files": [
+            "client/dist/*"
         ]
     },
     "prefer-stable": true,
     "minimum-stability": "dev"
 }
+```
+
+The files within this recipe would be organised in the structure:
+
+```
+client/
+  src/
+    blog.scss
+mysite/
+ _config/
+    settings.yml
+  code/
+    MyBlogPage.php
+public/
+  client/
+    dist/
+      blog.css
+composer.json
 ```

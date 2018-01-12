@@ -35,9 +35,24 @@ class RecipePlugin implements PluginInterface, EventSubscriberInterface, Capable
     const PROJECT_FILES = 'project-files';
 
     /**
+     * 'extra' key for public files
+     */
+    const PUBLIC_FILES = 'public-files';
+
+    /**
+     * Hard-coded 'public' web-root folder
+     */
+    const PUBLIC_PATH = 'public';
+
+    /**
      * 'extra' key for list of project files installed
      */
     const PROJECT_FILES_INSTALLED = 'project-files-installed';
+
+    /**
+     * 'extra' key for list of public files installed
+     */
+    const PUBLIC_FILES_INSTALLED = 'public-files-installed';
 
     /**
      * 'extra' key for project dependencies installed
@@ -81,8 +96,11 @@ class RecipePlugin implements PluginInterface, EventSubscriberInterface, Capable
         $file = new JsonFile(Factory::getComposerFile());
         $data = $file->read();
 
-        // Remove project-files from project, and any empty extra
-        unset($data['extra']['project-files']);
+        // Remove project and public files from project
+        unset($data['extra'][self::PROJECT_FILES]);
+        unset($data['extra'][self::PUBLIC_FILES]);
+
+        // Remove redundant empty extra
         if (empty($data['extra'])) {
             unset($data['extra']);
         }
