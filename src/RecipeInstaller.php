@@ -44,6 +44,10 @@ class RecipeInstaller extends LibraryInstaller {
         $any = false;
         foreach($fileIterator as $path => $info) {
             $destination = $destinationRoot . substr($path, strlen($sourceRoot));
+            $extension = pathinfo($destination, PATHINFO_EXTENSION);
+            if ($extension === 'tmpl') {
+                $destination = substr($destination, -5);
+            }
             $relativePath = substr($path, strlen($sourceRoot) + 1); // Name path without leading '/'
 
             // Write header
