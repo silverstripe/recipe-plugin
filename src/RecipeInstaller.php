@@ -8,6 +8,7 @@ use Composer\Composer;
 use Composer\IO\IOInterface;
 use Composer\Json\JsonFile;
 use Composer\Package\PackageInterface;
+use Composer\Util\Filesystem;
 use FilesystemIterator;
 use Iterator;
 use RecursiveDirectoryIterator;
@@ -16,8 +17,16 @@ use RegexIterator;
 
 class RecipeInstaller extends LibraryInstaller {
 
-    public function __construct(IOInterface $io, Composer $composer) {
-        parent::__construct($io, $composer, null);
+    /**
+     * RecipeInstaller constructor.
+     *
+     * @param IOInterface $io
+     * @param Composer $composer
+     * @param string $type
+     * @param Filesystem $filesystem
+     */
+    public function __construct(IOInterface $io, Composer $composer, $type = null, Filesystem $filesystem = null) {
+        parent::__construct($io, $composer, $type, $filesystem);
     }
 
     /**
@@ -32,23 +41,23 @@ class RecipeInstaller extends LibraryInstaller {
      */
     protected function installProjectFiles($recipe, $sourceRoot, $destinationRoot, $filePatterns, $registrationKey, $name = 'project')
     {
-        // load composer json data
-        $composerFile = new JsonFile(Factory::getComposerFile(), null, $this->io);
-        $composerData = $composerFile->read();
-        $installedFiles = isset($composerData['extra'][$registrationKey])
-            ? $composerData['extra'][$registrationKey]
-            : [];
+        // fetch the installed files from the json data
+        $installedFiles = $this->getInstalledFiles($registrationKey);
 
         // Load all project files
         $fileIterator = $this->getFileIterator($sourceRoot, $filePatterns);
         $any = false;
         foreach($fileIterator as $path => $info) {
             $destination = $destinationRoot . substr($path, strlen($sourceRoot));
-            $extension = pathinfo($destination, PATHINFO_EXTENSION);
-            if ($extension === 'tmpl') {
-                $destination = substr($destination, -5);
+            $destinationExt = pathinfo($destination, PATHINFO_EXTENSION);
+            if ($destinationExt === 'tmpl') {
+                $destination = substr($destination, 0, -5);
             }
             $relativePath = substr($path, strlen($sourceRoot) + 1); // Name path without leading '/'
+            $relativePathExt = pathinfo($relativePath, PATHINFO_EXTENSION);
+            if ($relativePathExt === 'tmpl') {
+                $relativePath = substr($relativePath, 0, -5);
+            }
 
             // Write header
             if (!$any) {
@@ -57,8 +66,8 @@ class RecipeInstaller extends LibraryInstaller {
             }
 
             // Check if file exists
-            if (file_exists($destination)) {
-                if (file_get_contents($destination) === file_get_contents($path)) {
+            if ($this->fileExists($destination)) {
+                if ($this->fileGetContents($destination) === $this->fileGetContents($path)) {
                     $this->io->write(
                         "  - Skipping <info>$relativePath</info> (<comment>existing, but unchanged</comment>)"
                     );
@@ -76,7 +85,7 @@ class RecipeInstaller extends LibraryInstaller {
                 $any++;
                 $this->io->write("  - Copying <info>$relativePath</info>");
                 $this->filesystem->ensureDirectoryExists(dirname($destination));
-                copy($path, $destination);
+                $this->filesystem->copy($path, $destination);
             }
 
             // Add file to installed (even if already exists)
@@ -92,8 +101,33 @@ class RecipeInstaller extends LibraryInstaller {
                 $composerData['extra'] = [];
             }
             $composerData['extra'][$registrationKey] = $installedFiles;
-            $composerFile->write($composerData);
+            $this->getComposerFile()->write($composerData);
         }
+    }
+
+    public function fileExists($filename)
+    {
+        return file_exists($filename);
+    }
+
+    public function fileGetContents($filename, $use_include_path = false, $context = null, $offset = 0, $maxlen = null)
+    {
+        return file_get_contents($filename, $use_include_path, $context, $offset, $maxlen);
+    }
+
+    protected function getComposerFile()
+    {
+        return new JsonFile(Factory::getComposerFile(), null, $this->io);
+    }
+
+    protected function getInstalledFiles($registrationKey)
+    {
+        // load composer json data
+        $composerFile = $this->getComposerFile();
+        $composerData = $composerFile->read();
+        return isset($composerData['extra'][$registrationKey])
+            ? $composerData['extra'][$registrationKey]
+            : [];
     }
 
     /**

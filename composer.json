@@ -14,6 +14,11 @@
             "SilverStripe\\RecipePlugin\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "SilverStripe\\Test\\RecipePlugin\\": "src/"
+        }
+    },
     "extra": {
         "class": "SilverStripe\\RecipePlugin\\RecipePlugin",
         "branch-alias": {
@@ -24,6 +29,7 @@
         "composer-plugin-api": "^1.1"
     },
     "require-dev": {
+        "phpunit/phpunit": "^7",
         "composer/composer": "^1.2"
     },
     "minimum-stability": "dev"
