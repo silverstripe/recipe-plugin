@@ -97,11 +97,13 @@ class RecipeInstaller extends LibraryInstaller {
         // If any files are written, modify composer.json with newly installed files
         if ($installedFiles) {
             sort($installedFiles);
+            $composerFile = $this->getComposerFile();
+            $composerData = $composerFile->read();
             if (!isset($composerData['extra'])) {
                 $composerData['extra'] = [];
             }
             $composerData['extra'][$registrationKey] = $installedFiles;
-            $this->getComposerFile()->write($composerData);
+            $composerFile->write($composerData);
         }
     }
 
