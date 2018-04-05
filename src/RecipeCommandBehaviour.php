@@ -242,7 +242,7 @@ trait RecipeCommandBehaviour
 
             // Add new require / extra-installed
             $composerData['require'] = $require;
-            if ($previouslyInstalled){
+            if ($previouslyInstalled) {
                 if (!isset($composerData['extra'])) {
                     $composerData['extra'] = [];
                 }

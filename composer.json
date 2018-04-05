@@ -20,6 +20,10 @@
             "dev-master": "1.x-dev"
         }
     },
+    "scripts": {
+        "lint": "phpcs src/",
+        "lint-clean": "phpcbf src/"
+    },
     "require": {
         "composer-plugin-api": "^1.1"
     },
