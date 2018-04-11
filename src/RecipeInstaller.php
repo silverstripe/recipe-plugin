@@ -14,9 +14,11 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RegexIterator;
 
-class RecipeInstaller extends LibraryInstaller {
+class RecipeInstaller extends LibraryInstaller
+{
 
-    public function __construct(IOInterface $io, Composer $composer) {
+    public function __construct(IOInterface $io, Composer $composer)
+    {
         parent::__construct($io, $composer, null);
     }
 
@@ -30,8 +32,14 @@ class RecipeInstaller extends LibraryInstaller {
      * @param string $registrationKey Registration key for installed files
      * @param string $name Name of project file type being installed
      */
-    protected function installProjectFiles($recipe, $sourceRoot, $destinationRoot, $filePatterns, $registrationKey, $name = 'project')
-    {
+    protected function installProjectFiles(
+        $recipe,
+        $sourceRoot,
+        $destinationRoot,
+        $filePatterns,
+        $registrationKey,
+        $name = 'project'
+    ) {
         // load composer json data
         $composerFile = new JsonFile(Factory::getComposerFile(), null, $this->io);
         $composerData = $composerFile->read();
@@ -42,38 +50,15 @@ class RecipeInstaller extends LibraryInstaller {
         // Load all project files
         $fileIterator = $this->getFileIterator($sourceRoot, $filePatterns);
         $any = false;
-        foreach($fileIterator as $path => $info) {
-            $destination = $destinationRoot . substr($path, strlen($sourceRoot));
-            $relativePath = substr($path, strlen($sourceRoot) + 1); // Name path without leading '/'
-
-            // Write header
+        foreach ($fileIterator as $path => $info) {
+            // Write header on first file
             if (!$any) {
                 $this->io->write("Installing {$name} files for recipe <info>{$recipe}</info>:");
                 $any = true;
             }
 
-            // Check if file exists
-            if (file_exists($destination)) {
-                if (file_get_contents($destination) === file_get_contents($path)) {
-                    $this->io->write(
-                        "  - Skipping <info>$relativePath</info> (<comment>existing, but unchanged</comment>)"
-                    );
-                } else {
-                    $this->io->write(
-                        "  - Skipping <info>$relativePath</info> (<comment>existing and modified in project</comment>)"
-                    );
-                }
-            } elseif (in_array($relativePath, $installedFiles)) {
-                // Don't re-install previously installed files that have been deleted
-                $this->io->write(
-                    "  - Skipping <info>$relativePath</info> (<comment>previously installed</comment>)"
-                );
-            } else {
-                $any++;
-                $this->io->write("  - Copying <info>$relativePath</info>");
-                $this->filesystem->ensureDirectoryExists(dirname($destination));
-                copy($path, $destination);
-            }
+            // Install this file
+            $relativePath = $this->installProjectFile($sourceRoot, $destinationRoot, $path, $installedFiles);
 
             // Add file to installed (even if already exists)
             if (!in_array($relativePath, $installedFiles)) {
@@ -93,16 +78,57 @@ class RecipeInstaller extends LibraryInstaller {
     }
 
     /**
+     * @param string $sourceRoot Base of source files (no trailing slash)
+     * @param string $destinationRoot Base of destination directory (no trailing slash)
+     * @param string $sourcePath Full filesystem path to the file to copy
+     * @param array $installedFiles List of installed files
+     * @return bool|string
+     */
+    protected function installProjectFile($sourceRoot, $destinationRoot, $sourcePath, $installedFiles)
+    {
+        // Relative path
+        $relativePath = substr($sourcePath, strlen($sourceRoot) + 1); // Name path without leading '/'
+
+        // Get destination path
+        $relativeDestination = $this->rewriteFilePath($destinationRoot, $relativePath);
+        $destination = $destinationRoot . DIRECTORY_SEPARATOR . $relativeDestination;
+
+        // Check if file exists
+        if (file_exists($destination)) {
+            if (file_get_contents($destination) === file_get_contents($sourcePath)) {
+                $this->io->write(
+                    "  - Skipping <info>$relativePath</info> (<comment>existing, but unchanged</comment>)"
+                );
+            } else {
+                $this->io->write(
+                    "  - Skipping <info>$relativePath</info> (<comment>existing and modified in project</comment>)"
+                );
+            }
+        } elseif (in_array($relativePath, $installedFiles) || in_array($relativeDestination, $installedFiles)) {
+            // Don't re-install previously installed files that have been deleted
+            $this->io->write(
+                "  - Skipping <info>$relativePath</info> (<comment>previously installed</comment>)"
+            );
+        } else {
+            $this->io->write("  - Copying <info>$relativePath</info>");
+            $this->filesystem->ensureDirectoryExists(dirname($destination));
+            copy($sourcePath, $destination);
+        }
+        return $relativePath;
+    }
+
+    /**
      * Get iterator of matching source files to copy
      *
      * @param string $sourceRoot Root directory of sources (no trailing slash)
      * @param array $patterns List of wildcard patterns to match
      * @return Iterator File iterator, where key is path and value is file info object
      */
-    protected function getFileIterator($sourceRoot, $patterns) {
+    protected function getFileIterator($sourceRoot, $patterns)
+    {
         // Build regexp pattern
         $expressions = [];
-        foreach($patterns as $pattern) {
+        foreach ($patterns as $pattern) {
             $expressions[] = $this->globToRegexp($pattern);
         }
         $regExp = '#^' . $this->globToRegexp($sourceRoot . '/').'(('.implode(')|(', $expressions).'))$#';
@@ -127,9 +153,10 @@ class RecipeInstaller extends LibraryInstaller {
      * @param string $glob
      * @return string
      */
-    protected function globToRegexp($glob) {
+    protected function globToRegexp($glob)
+    {
         $sourceParts = explode('*', $glob);
-        $regexParts = array_map(function($part) {
+        $regexParts = array_map(function ($part) {
             return preg_quote($part, '#');
         }, $sourceParts);
         return implode('(.+)', $regexParts);
@@ -182,5 +209,39 @@ class RecipeInstaller extends LibraryInstaller {
                 'public'
             );
         }
+    }
+
+    /**
+     * Perform any file rewrites necessary to a relative path of a file being installed.
+     * E.g. if 'mysite' folder exists, rewrite 'mysite' to 'app' and 'mysite/code' to 'app/src'
+     *
+     * @deprecated 1.2..2.0 Will be removed in 2.0; app folder will be hard coded and no
+     * rewrites supported.
+     * @param string $destinationRoot Project root
+     * @param string $relativePath Relative path to the resource being installed
+     * @return string Relative path we should write to
+     */
+    protected function rewriteFilePath($destinationRoot, $relativePath)
+    {
+        // If app folder exists, no rewrite
+        if (is_dir($destinationRoot . DIRECTORY_SEPARATOR . 'app')) {
+            return $relativePath;
+        }
+        // if mysite folder does NOT exist, no rewrite
+        if (!is_dir($destinationRoot . DIRECTORY_SEPARATOR . 'mysite')) {
+            return $relativePath;
+        }
+
+        // Return first rewrite
+        $rewrites = [
+            'app/src' => 'mysite/code',
+            'app' => 'mysite',
+        ];
+        foreach ($rewrites as $from => $to) {
+            if (stripos($relativePath, $from) === 0) {
+                return $to . substr($relativePath, strlen($from));
+            }
+        }
+        return $relativePath;
     }
 }
