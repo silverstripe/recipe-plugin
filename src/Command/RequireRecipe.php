@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\RecipePlugin;
+namespace SilverStripe\RecipePlugin\Command;
 
 use Composer\Command\BaseCommand;
 use Symfony\Component\Console\Input\InputArgument;
@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Provides the 'require-recipe' command which allows a new recipe to be installed, but also
  * soft-updates any existing recipe.
  */
-class RequireRecipeCommand extends BaseCommand
+class RequireRecipe extends BaseCommand
 {
     use RecipeCommandBehaviour;
 

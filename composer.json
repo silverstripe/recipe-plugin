@@ -22,7 +22,8 @@
         "lint-clean": "phpcbf src/"
     },
     "require": {
-        "composer-plugin-api": "^1.1"
+        "composer-plugin-api": "^1.1",
+        "ext-json": "*"
     },
     "require-dev": {
         "composer/composer": "^1.2"

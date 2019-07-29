@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\RecipePlugin;
+namespace SilverStripe\RecipePlugin\Command;
 
 use BadMethodCallException;
 use Composer\Command\BaseCommand;
@@ -8,7 +8,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class UpdateRecipeCommand extends BaseCommand
+class UpdateRecipe extends BaseCommand
 {
     use RecipeCommandBehaviour;
 

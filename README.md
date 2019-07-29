@@ -15,6 +15,7 @@ These recipes allow for the following features:
  - A `require-recipe` command to inline a recipe into the root composer.json, allowing the developer to customise the
    recipe dependencies without mandating the inclusion of all requirements directly.
  - An `update-recipe` command to upgrade to a newer version of a recipe.
+ - An `unpack` command to eject the recipe from the current project.
 
 ## Example output
 
@@ -182,3 +183,19 @@ public/
       blog.css
 composer.json
 ```
+
+## Unpacking a recipe
+Sometimes you need to remove the recipe configuration for more control over your dependency set. In these situations
+you can unpack a SilverStripe recipe.
+
+To unpack a recipe you can run the following command
+```shell
+composer unpack silverstripe/recipe-core
+```
+
+This commands moves the composer requirements out of the recipe and puts them into the root `composer.json`. This allows
+the ability to easily modify recipe requirements when you need to.
+
+###Credit
+Parts of the unpack system were influenced by, or taken completely, from the work of Fabien Potencier on
+[Symfony Flex](https://github.com/symfony/flex/blob/master/LICENSE).

@@ -4,6 +4,9 @@ namespace SilverStripe\RecipePlugin;
 
 use Composer\Command\BaseCommand;
 use Composer\Plugin\Capability\CommandProvider;
+use SilverStripe\RecipePlugin\Command\RequireRecipe;
+use SilverStripe\RecipePlugin\Command\UnpackCommand;
+use SilverStripe\RecipePlugin\Command\UpdateRecipe;
 
 class RecipeCommandProvider implements CommandProvider
 {
@@ -15,8 +18,9 @@ class RecipeCommandProvider implements CommandProvider
     public function getCommands()
     {
         return [
-            new RequireRecipeCommand(),
-            new UpdateRecipeCommand(),
+            new RequireRecipe(),
+            new UpdateRecipe(),
+            new UnpackCommand(),
         ];
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\RecipePlugin;
+namespace SilverStripe\RecipePlugin\Command;
 
 use Composer\Command\RequireCommand;
 use Composer\Command\UpdateCommand;
