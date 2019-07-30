@@ -19,6 +19,7 @@ class RequireRecipeCommand extends BaseCommand
     {
         $this->setName('require-recipe');
         $this->setDescription('Invoke this command to inline a recipe into your root composer.json');
+        $this->setAliases(['eject', 'unpack']);
         $this->addArgument(
             'recipe',
             InputArgument::REQUIRED,

@@ -37,28 +37,35 @@ $ composer create-project silverstripe/recipe-cms ./myssproject ^1.0@dev
 
 ## Inlining recipes
 
-You can "inline" either a previously installed recipe, or a new one that you would like to include
-dependencies for in your main project. By inlining a recipe, you promote its requirements, as well as
+You can "inline" (aliased as "unpack" and "eject") either a previously installed recipe, or a new one that you would
+like to include dependencies for in your main project. By inlining a recipe, you promote its requirements, as well as
 its project files, up into your main project, and remove the recipe itself from your dependencies.
 
 This can be done with either `update-recipe`, which will update a recipe, or `require-recipe` which will
 install a new recipe.
 
-Note that if you wish to run this command you must first install either a recipe via normal composer
-commands, or install the recipe plugin:
-
 ```shell
-$ composer init
-$ composer require silverstripe/recipe-plugin ^0.1
 $ composer require-recipe silverstripe/recipe-cms ^1.0@dev
 ```
 
 or
 
 ```shell
+$ composer unpack silverstripe/recipe-cms
+```
+
+or
+
+```shell
+$ composer eject silverstripe/recipe-cms
+```
+
+Note that if you wish to run this command you must first install either a recipe via normal composer
+commands, or install the recipe plugin:
+
+```shell
 $ composer init
 $ composer require silverstripe/recipe-cms ^1.0@dev
-$ composer update-recipe silverstripe/recipe-cms
 ```
 
 ## Removing recipe dependencies or files
@@ -89,7 +96,7 @@ To remove a file, simply delete it from the folder your project is installed in,
 `project-files-installed` (as this is how composer knows what not to re-install).
 
 Likewise to remove a module, use `composer remove <module>` and it will be removed. As above, don't
-modify `project-dependencies-instaleld`, otherwise that module will be re-installed on subsequent
+modify `project-dependencies-installed`, otherwise that module will be re-installed on subsequent
 `composer update-recipe`.
 
 ## Un-doing a deleted project file / dependency
