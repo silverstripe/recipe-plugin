@@ -133,4 +133,15 @@ class RecipePlugin implements PluginInterface, EventSubscriberInterface, Capable
             CommandProvider::class => RecipeCommandProvider::class
         ];
     }
+
+
+    public function deactivate(Composer $composer, IOInterface $io)
+    {
+
+    }
+
+    public function uninstall(Composer $composer, IOInterface $io)
+    {
+
+    }
 }

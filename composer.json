@@ -22,10 +22,10 @@
         "lint-clean": "phpcbf src/"
     },
     "require": {
-        "composer-plugin-api": "^1.1"
+        "composer-plugin-api": "^1.1|^2"
     },
     "require-dev": {
-        "composer/composer": "^1.2"
+        "composer/composer": "^1.2|2"
     },
     "minimum-stability": "dev"
 }
