@@ -1,5 +1,7 @@
 # SilverStripe recipe-plugin
 
+[![Build Status](https://api.travis-ci.com/silverstripe/recipe-plugin.svg?branch=1)](https://travis-ci.com/silverstripe/recipe-plugin)
+
 ## Introduction
 
 This plugin enhances composer and allows for the installation of "silverstripe-recipe" packages.
