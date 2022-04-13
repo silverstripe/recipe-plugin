@@ -61,7 +61,7 @@ class RecipeInstaller extends LibraryInstaller
             $relativePath = $this->installProjectFile($sourceRoot, $destinationRoot, $path, $installedFiles);
 
             // Add file to installed (even if already exists)
-            if (!in_array($relativePath, $installedFiles)) {
+            if (!in_array($relativePath, $installedFiles ?? [])) {
                 $installedFiles[] = $relativePath;
             }
         }
@@ -87,15 +87,15 @@ class RecipeInstaller extends LibraryInstaller
     protected function installProjectFile($sourceRoot, $destinationRoot, $sourcePath, $installedFiles)
     {
         // Relative path
-        $relativePath = substr($sourcePath, strlen($sourceRoot) + 1); // Name path without leading '/'
+        $relativePath = substr($sourcePath ?? '', strlen($sourceRoot ?? '') + 1); // Name path without leading '/'
 
         // Get destination path
         $relativeDestination = $this->rewriteFilePath($destinationRoot, $relativePath);
         $destination = $destinationRoot . DIRECTORY_SEPARATOR . $relativeDestination;
 
         // Check if file exists
-        if (file_exists($destination)) {
-            if (file_get_contents($destination) === file_get_contents($sourcePath)) {
+        if (file_exists($destination ?? '')) {
+            if (file_get_contents($destination ?? '') === file_get_contents($sourcePath ?? '')) {
                 $this->io->write(
                     "  - Skipping <info>$relativePath</info> (<comment>existing, but unchanged</comment>)"
                 );
@@ -104,15 +104,17 @@ class RecipeInstaller extends LibraryInstaller
                     "  - Skipping <info>$relativePath</info> (<comment>existing and modified in project</comment>)"
                 );
             }
-        } elseif (in_array($relativePath, $installedFiles) || in_array($relativeDestination, $installedFiles)) {
+        } elseif (in_array($relativePath, $installedFiles ?? []) ||
+            in_array($relativeDestination, $installedFiles ?? [])
+        ) {
             // Don't re-install previously installed files that have been deleted
             $this->io->write(
                 "  - Skipping <info>$relativePath</info> (<comment>previously installed</comment>)"
             );
         } else {
             $this->io->write("  - Copying <info>$relativePath</info>");
-            $this->filesystem->ensureDirectoryExists(dirname($destination));
-            copy($sourcePath, $destination);
+            $this->filesystem->ensureDirectoryExists(dirname($destination ?? ''));
+            copy($sourcePath ?? '', $destination ?? '');
         }
         return $relativePath;
     }
@@ -155,10 +157,10 @@ class RecipeInstaller extends LibraryInstaller
      */
     protected function globToRegexp($glob)
     {
-        $sourceParts = explode('*', $glob);
+        $sourceParts = explode('*', $glob ?? '');
         $regexParts = array_map(function ($part) {
-            return preg_quote($part, '#');
-        }, $sourceParts);
+            return preg_quote($part ?? '', '#');
+        }, $sourceParts ?? []);
         return implode('(.+)', $regexParts);
     }
 
@@ -176,11 +178,11 @@ class RecipeInstaller extends LibraryInstaller
         $recipePath = $this->getInstallPath($package);
 
         // Find project path
-        $projectPath = dirname(realpath(Factory::getComposerFile()));
+        $projectPath = dirname(realpath(Factory::getComposerFile() ?? '') ?? '');
 
         // Find public path
         $candidatePublicPath = $projectPath . DIRECTORY_SEPARATOR . RecipePlugin::PUBLIC_PATH;
-        $publicPath = is_dir($candidatePublicPath) ? $candidatePublicPath : $projectPath;
+        $publicPath = is_dir($candidatePublicPath ?? '') ? $candidatePublicPath : $projectPath;
 
         // Copy project files to root
         $name = $package->getName();
@@ -238,8 +240,8 @@ class RecipeInstaller extends LibraryInstaller
             'app' => 'mysite',
         ];
         foreach ($rewrites as $from => $to) {
-            if (stripos($relativePath, $from) === 0) {
-                return $to . substr($relativePath, strlen($from));
+            if (stripos($relativePath ?? '', $from ?? '') === 0) {
+                return $to . substr($relativePath ?? '', strlen($from ?? ''));
             }
         }
         return $relativePath;
