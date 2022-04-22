@@ -103,17 +103,17 @@ trait RecipeCommandBehaviour
         }
 
         // Existing version is already a ^1.0.0 or ~1.0.0 constraint
-        if (preg_match('#^[~^]#', $existingVersion)) {
+        if (preg_match('#^[~^]#', $existingVersion ?? '')) {
             return $existingVersion;
         }
 
         // Existing version is already a dev constraint
-        if (stristr($existingVersion, 'dev') !== false) {
+        if (stristr($existingVersion ?? '', 'dev') !== false) {
             return $existingVersion;
         }
 
         // Numeric-only version maps to semver constraint
-        if (preg_match('#^([\d.]+)$#', $existingVersion)) {
+        if (preg_match('#^([\d.]+)$#', $existingVersion ?? '')) {
             return "^{$existingVersion}";
         }
 
