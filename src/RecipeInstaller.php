@@ -16,6 +16,10 @@ use RegexIterator;
 
 class RecipeInstaller extends LibraryInstaller
 {
+    /**
+     * @var bool
+     */
+    private $hasWrittenFiles = false;
 
     public function __construct(IOInterface $io, Composer $composer)
     {
@@ -67,13 +71,15 @@ class RecipeInstaller extends LibraryInstaller
         }
 
         // If any files are written, modify composer.json with newly installed files
-        if ($installedFiles) {
+        if ($this->hasWrittenFiles) {
             sort($installedFiles);
             if (!isset($composerData['extra'])) {
                 $composerData['extra'] = [];
             }
             $composerData['extra'][$registrationKey] = $installedFiles;
             $composerFile->write($composerData);
+            // Reset the variable so that we can try this trick again later
+            $this->hasWrittenFiles = false;
         }
     }
 
@@ -115,6 +121,7 @@ class RecipeInstaller extends LibraryInstaller
             $this->io->write("  - Copying <info>$relativePath</info>");
             $this->filesystem->ensureDirectoryExists(dirname($destination ?? ''));
             copy($sourcePath ?? '', $destination ?? '');
+            $this->hasWrittenFiles = true;
         }
         return $relativePath;
     }
