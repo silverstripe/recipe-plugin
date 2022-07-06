@@ -110,7 +110,8 @@ class RecipeInstaller extends LibraryInstaller
                     "  - Skipping <info>$relativePath</info> (<comment>existing and modified in project</comment>)"
                 );
             }
-        } elseif (in_array($relativePath, $installedFiles ?? []) ||
+        } elseif (
+            in_array($relativePath, $installedFiles ?? []) ||
             in_array($relativeDestination, $installedFiles ?? [])
         ) {
             // Don't re-install previously installed files that have been deleted
@@ -140,7 +141,7 @@ class RecipeInstaller extends LibraryInstaller
         foreach ($patterns as $pattern) {
             $expressions[] = $this->globToRegexp($pattern);
         }
-        $regExp = '#^' . $this->globToRegexp($sourceRoot . '/').'(('.implode(')|(', $expressions).'))$#';
+        $regExp = '#^' . $this->globToRegexp($sourceRoot . '/') . '((' . implode(')|(', $expressions) . '))$#';
 
         // Build directory iterator
         $directoryIterator = new RecursiveDirectoryIterator(
