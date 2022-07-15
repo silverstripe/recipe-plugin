@@ -1,6 +1,5 @@
 <?php
 
-
 namespace SilverStripe\RecipePlugin;
 
 use Composer\Composer;
@@ -27,37 +26,37 @@ class RecipePlugin implements PluginInterface, EventSubscriberInterface, Capable
     /**
      * Type of recipe to check for
      */
-    const RECIPE_TYPE = 'silverstripe-recipe';
+    public const RECIPE_TYPE = 'silverstripe-recipe';
 
     /**
      * 'extra' key for project files
      */
-    const PROJECT_FILES = 'project-files';
+    public const PROJECT_FILES = 'project-files';
 
     /**
      * 'extra' key for public files
      */
-    const PUBLIC_FILES = 'public-files';
+    public const PUBLIC_FILES = 'public-files';
 
     /**
      * Hard-coded 'public' web-root folder
      */
-    const PUBLIC_PATH = 'public';
+    public const PUBLIC_PATH = 'public';
 
     /**
      * 'extra' key for list of project files installed
      */
-    const PROJECT_FILES_INSTALLED = 'project-files-installed';
+    public const PROJECT_FILES_INSTALLED = 'project-files-installed';
 
     /**
      * 'extra' key for list of public files installed
      */
-    const PUBLIC_FILES_INSTALLED = 'public-files-installed';
+    public const PUBLIC_FILES_INSTALLED = 'public-files-installed';
 
     /**
      * 'extra' key for project dependencies installed
      */
-    const PROJECT_DEPENDENCIES_INSTALLED = 'project-dependencies-installed';
+    public const PROJECT_DEPENDENCIES_INSTALLED = 'project-dependencies-installed';
 
     public function activate(Composer $composer, IOInterface $io)
     {
