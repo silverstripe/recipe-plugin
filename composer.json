@@ -15,10 +15,7 @@
         }
     },
     "extra": {
-        "class": "SilverStripe\\RecipePlugin\\RecipePlugin",
-        "branch-alias": {
-            "dev-master": "2.x-dev"
-        }
+        "class": "SilverStripe\\RecipePlugin\\RecipePlugin"
     },
     "scripts": {
         "lint": "phpcs src/",
