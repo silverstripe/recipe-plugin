@@ -27,7 +27,7 @@
     },
     "require-dev": {
         "composer/composer": "^2",
-        "squizlabs/php_codesniffer": "^3.5"
+        "squizlabs/php_codesniffer": "^3.7"
     },
     "minimum-stability": "dev"
 }
