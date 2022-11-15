@@ -2,6 +2,7 @@
 
 namespace SilverStripe\RecipePlugin;
 
+use SilverStripe\Dev\Deprecation;
 use Composer\Factory;
 use Composer\Installer\LibraryInstaller;
 use Composer\Composer;
@@ -234,6 +235,7 @@ class RecipeInstaller extends LibraryInstaller
      */
     protected function rewriteFilePath($destinationRoot, $relativePath)
     {
+        Deprecation::notice('1.2.0', 'Will be removed without equivalent functionality to replace it');
         // If app folder exists, no rewrite
         if (is_dir($destinationRoot . DIRECTORY_SEPARATOR . 'app')) {
             return $relativePath;
