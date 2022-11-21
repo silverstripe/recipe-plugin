@@ -225,8 +225,9 @@ class RecipeInstaller extends LibraryInstaller
      * Perform any file rewrites necessary to a relative path of a file being installed.
      * E.g. if 'mysite' folder exists, rewrite 'mysite' to 'app' and 'mysite/code' to 'app/src'
      *
-     * @deprecated 1.2..2.0 Will be removed in 2.0; app folder will be hard coded and no
-     * rewrites supported.
+     * This will be removed in 2.0 as the app folder will be hard coded and no rewrites supported.
+     *
+     * @deprecated 1.2.0 Will be removed without equivalent functionality to replace it
      * @param string $destinationRoot Project root
      * @param string $relativePath Relative path to the resource being installed
      * @return string Relative path we should write to
