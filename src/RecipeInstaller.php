@@ -96,8 +96,7 @@ class RecipeInstaller extends LibraryInstaller
         $relativePath = substr($sourcePath ?? '', strlen($sourceRoot ?? '') + 1); // Name path without leading '/'
 
         // Get destination path
-        $relativeDestination = $this->rewriteFilePath($destinationRoot, $relativePath);
-        $destination = $destinationRoot . DIRECTORY_SEPARATOR . $relativeDestination;
+        $destination = $destinationRoot . DIRECTORY_SEPARATOR . $relativePath;
 
         // Check if file exists
         if (file_exists($destination ?? '')) {
@@ -110,10 +109,7 @@ class RecipeInstaller extends LibraryInstaller
                     "  - Skipping <info>$relativePath</info> (<comment>existing and modified in project</comment>)"
                 );
             }
-        } elseif (
-            in_array($relativePath, $installedFiles ?? []) ||
-            in_array($relativeDestination, $installedFiles ?? [])
-        ) {
+        } elseif (in_array($relativePath, $installedFiles ?? [])) {
             // Don't re-install previously installed files that have been deleted
             $this->io->write(
                 "  - Skipping <info>$relativePath</info> (<comment>previously installed</comment>)"
@@ -219,40 +215,5 @@ class RecipeInstaller extends LibraryInstaller
                 'public'
             );
         }
-    }
-
-    /**
-     * Perform any file rewrites necessary to a relative path of a file being installed.
-     * E.g. if 'mysite' folder exists, rewrite 'mysite' to 'app' and 'mysite/code' to 'app/src'
-     *
-     * This will be removed in 2.0 as the app folder will be hard coded and no rewrites supported.
-     *
-     * @deprecated 1.2.0 Will be removed without equivalent functionality to replace it
-     * @param string $destinationRoot Project root
-     * @param string $relativePath Relative path to the resource being installed
-     * @return string Relative path we should write to
-     */
-    protected function rewriteFilePath($destinationRoot, $relativePath)
-    {
-        // If app folder exists, no rewrite
-        if (is_dir($destinationRoot . DIRECTORY_SEPARATOR . 'app')) {
-            return $relativePath;
-        }
-        // if mysite folder does NOT exist, no rewrite
-        if (!is_dir($destinationRoot . DIRECTORY_SEPARATOR . 'mysite')) {
-            return $relativePath;
-        }
-
-        // Return first rewrite
-        $rewrites = [
-            'app/src' => 'mysite/code',
-            'app' => 'mysite',
-        ];
-        foreach ($rewrites as $from => $to) {
-            if (stripos($relativePath ?? '', $from ?? '') === 0) {
-                return $to . substr($relativePath ?? '', strlen($from ?? ''));
-            }
-        }
-        return $relativePath;
     }
 }
