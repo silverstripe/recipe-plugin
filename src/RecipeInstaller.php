@@ -189,8 +189,7 @@ class RecipeInstaller extends LibraryInstaller
         $projectPath = dirname(realpath(Factory::getComposerFile() ?? '') ?? '');
 
         // Find public path
-        $candidatePublicPath = $projectPath . DIRECTORY_SEPARATOR . RecipePlugin::PUBLIC_PATH;
-        $publicPath = is_dir($candidatePublicPath ?? '') ? $candidatePublicPath : $projectPath;
+        $publicPath = $projectPath . DIRECTORY_SEPARATOR . RecipePlugin::PUBLIC_PATH;
 
         // Copy project files to root
         $name = $package->getName();
