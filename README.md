@@ -19,6 +19,12 @@ These recipes allow for the following features:
    recipe dependencies without mandating the inclusion of all requirements directly.
  - An `update-recipe` command to upgrade to a newer version of a recipe.
 
+## Installation
+
+```sh
+composer require silverstripe/recipe-plugin
+```
+
 ## Example output
 
 ![example-output](docs/_images/require-usage.png)
@@ -27,15 +33,15 @@ These recipes allow for the following features:
 
 Recipes can be introduced to any existing project (even if not created on a silverstripe base project)
 
-```shell
-$ composer init
-$ composer require silverstripe/recipe-cms ^1.0@dev
-````
+```sh
+composer init
+composer require silverstripe/recipe-cms
+```
 
 Alternatively you can create a new project based on an existing recipe
 
-```shell
-$ composer create-project silverstripe/recipe-cms ./myssproject ^1.0@dev
+```sh
+composer create-project silverstripe/recipe-cms ./myssproject
 ```
 
 ## Inlining recipes
@@ -50,18 +56,18 @@ install a new recipe.
 Note that if you wish to run this command you must first install either a recipe via normal composer
 commands, or install the recipe plugin:
 
-```shell
-$ composer init
-$ composer require silverstripe/recipe-plugin ^0.1
-$ composer require-recipe silverstripe/recipe-cms ^1.0@dev
+```sh
+composer init
+composer require silverstripe/recipe-plugin
+composer require-recipe silverstripe/recipe-cms
 ```
 
 or
 
-```shell
-$ composer init
-$ composer require silverstripe/recipe-cms ^1.0@dev
-$ composer update-recipe silverstripe/recipe-cms
+```sh
+composer init
+composer require silverstripe/recipe-cms
+composer update-recipe silverstripe/recipe-cms
 ```
 
 ## Removing recipe dependencies or files
@@ -80,9 +86,9 @@ as below.
             "mysite/code/PageController.php"
         ],
         "project-dependencies-installed": {
-            "silverstripe/admin": "1.0.x-dev",
-            "silverstripe/asset-admin": "1.0.x-dev",
-            "silverstripe/campaign-admin": "1.0.x-dev"
+            "silverstripe/admin": "2.0.x-dev",
+            "silverstripe/asset-admin": "2.0.x-dev",
+            "silverstripe/campaign-admin": "2.0.x-dev"
         }
     }
 }
@@ -148,10 +154,10 @@ An example recipe:
     "description": "Example silverstripe recipe",
     "type": "silverstripe-recipe",
     "require": {
-        "silverstripe/recipe-plugin": "^0.1",
-        "silverstripe/recipe-cms": "^1.0",
-        "silverstripe/blog": "^3.0@dev",
-        "silverstripe/lumberjack": "^2.1@dev",
+        "silverstripe/recipe-plugin": "^1.0",
+        "silverstripe/recipe-cms": "^5.0",
+        "silverstripe/blog": "^4.0",
+        "silverstripe/lumberjack": "^3.0",
     },
     "extra": {
         "project-files": [
