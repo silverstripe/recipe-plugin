@@ -88,7 +88,6 @@ as below.
         "project-dependencies-installed": {
             "silverstripe/admin": "2.0.x-dev",
             "silverstripe/asset-admin": "2.0.x-dev",
-            "silverstripe/campaign-admin": "2.0.x-dev"
         }
     }
 }
