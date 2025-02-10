@@ -35,7 +35,7 @@ HELP
         );
     }
 
-    public function execute(InputInterface $input, OutputInterface $output)
+    public function execute(InputInterface $input, OutputInterface $output): int
     {
         $recipe = $input->getArgument('recipe');
         $constraint = $input->getArgument('version');
